@@ -12,6 +12,8 @@ job "nginx" {
         port_map {
           http = 80
         }
+        command = "sh"
+        args = ["-c", "echo 'test job done' > /usr/share/nginx/html/index.html && nginx -g 'daemon off;'"]
       }
 
       resources {
@@ -20,11 +22,6 @@ job "nginx" {
             static = 80
           }
         }
-      }
-
-      template {
-        data =  "test job done"
-        destination = "/usr/share/nginx/html/index.html"
       }
     }
   }
