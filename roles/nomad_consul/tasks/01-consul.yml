@@ -1,0 +1,131 @@
+# TODO добавить блоки
+- name: Get private ip
+  ansible.builtin.shell:
+    cmd: ip a | grep "{{ private_net_for_search }}" |  grep -oP '(?<=inet\s)\d+(\.\d+){3}'
+  register: private_ip
+  
+- name: Set fact - Private ip
+  ansible.builtin.set_fact:
+    private_ip: "{{ hostvars[inventory_hostname].private_ip.stdout }}"
+
+- name: Set fact - Consul server ip
+  ansible.builtin.set_fact:
+    consul_server_ip: "{{ hostvars[groups['all'][0]].private_ip }}"
+
+
+- name: Install required packages
+  ansible.builtin.apt:
+    name:
+      - wget
+      - gpg
+      - coreutils
+    state: present
+    update_cache: true
+
+- name: Add the HashiCorp GPG key
+  ansible.builtin.apt_key:
+    url: https://apt.releases.hashicorp.com/gpg
+    state: present
+
+- name: Add the HashiCorp repository
+  ansible.builtin.apt_repository:
+    repo: "deb https://apt.releases.hashicorp.com {{ ansible_lsb.codename }} main"
+    state: present
+    filename: "hashicorp"
+
+- name: Install HashiCorp Consul
+  ansible.builtin.apt:
+    name: 
+      - consul
+    state: present
+    update_cache: true
+
+
+- name: Get Consul key
+  when: inventory_hostname == groups['all'][0]
+  ansible.builtin.command: consul keygen
+  register: consul_keygen_result
+
+- name: Set fact - Consul_key
+  when: inventory_hostname == groups['all'][0]
+  ansible.builtin.set_fact:
+    consul_key: "{{ consul_keygen_result.stdout }}"
+
+- name: Set fact - Consul_key on all other servers
+  ansible.builtin.set_fact:
+    consul_key: "{{ hostvars[groups['all'][0]].consul_key }}"
+
+
+- name: Create directory /etc/consul.d/bootstrap on server
+  when: inventory_hostname == groups['all'][0]
+  ansible.builtin.file:
+    path: /etc/consul.d/bootstrap
+    owner: consul
+    group: consul
+    mode: '0755'
+    state: directory
+
+- name: Copy template to /etc/consul.d/bootstrap/config.json on server
+  when: inventory_hostname == groups['all'][0]
+  ansible.builtin.template:
+    src: consul-config-server.j2
+    dest: /etc/consul.d/bootstrap/config.json
+    owner: consul
+    group: consul
+    mode: '0644'
+
+- name: Copy Consul server service  on server
+  when: inventory_hostname == groups['all'][0]
+  ansible.builtin.copy:
+    src: consul-server.service
+    dest: /etc/systemd/system/consul.service
+    owner: root
+    group: root
+
+- name: Start service on server
+  when: inventory_hostname == groups['all'][0]
+  ansible.builtin.systemd_service:
+    name: consul.service
+    daemon_reload: true
+    state: started
+
+
+- name: Create directory /etc/consul.d/client on agent
+  when: inventory_hostname != groups['all'][0]
+  ansible.builtin.file:
+    path: /etc/consul.d/client
+    owner: consul
+    group: consul
+    mode: '0755'
+    state: directory
+
+- name: Copy template to /etc/consul.d/client/config.json on agent
+  when: inventory_hostname != groups['all'][0]
+  ansible.builtin.template:
+    src: consul-config-agent.j2
+    dest: /etc/consul.d/client/config.json
+    owner: consul
+    group: consul
+    mode: '0644'
+
+
+- name: Copy Consul agent service on agent
+  when: inventory_hostname != groups['all'][0]
+  ansible.builtin.copy:
+    src: consul-agent.service
+    dest: /etc/systemd/system/consul.service
+    owner: root
+    group: root
+
+- name: Start all services on agent
+  when: inventory_hostname != groups['all'][0]
+  ansible.builtin.systemd_service:
+    name: consul.service
+    daemon_reload: true
+    state: started
+
+- name: Restart consul serviced 
+  ansible.builtin.systemd_service:
+    name: consul.service
+    daemon_reload: true
+    state: restarted

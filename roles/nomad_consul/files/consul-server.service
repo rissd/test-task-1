@@ -1,0 +1,12 @@
+[Unit]
+Description="Consul Startup process"
+Documentation=https://www.consul.io/
+After=network.target
+ 
+[Service]
+Type=simple
+ExecStart=/usr/bin/consul agent -config-dir /etc/consul.d/bootstrap -ui
+TimeoutStartSec=0
+ 
+[Install]
+WantedBy=default.target

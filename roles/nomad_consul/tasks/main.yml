@@ -1,0 +1,8 @@
+- name: Consul setup
+  ansible.builtin.import_tasks: 01-consul.yml
+
+- name: Docker setup
+  ansible.builtin.import_tasks: 02-docker.yml
+
+- name: Nomad setup
+  ansible.builtin.import_tasks: 03-nomad.yml

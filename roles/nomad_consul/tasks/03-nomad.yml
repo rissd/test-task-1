@@ -1,0 +1,60 @@
+---
+- name: Install HashiCorp Nomad
+  when: inventory_hostname != groups['all'][0]
+  ansible.builtin.apt:
+    name: 
+      - nomad
+    state: present
+    update_cache: true
+
+- name: Create directory data /opt/nomad
+  when: inventory_hostname != groups['all'][0]
+  ansible.builtin.file:
+    path: /opt/nomad
+    owner: nomad
+    group: nomad
+    mode: '0755'
+    state: directory
+
+- name: Copy nomad.hcl
+  when: inventory_hostname != groups['all'][0]
+  ansible.builtin.copy:
+    src: nomad.hcl
+    dest: /etc/nomad.d/nomad.hcl
+    owner: nomad
+    group: nomad
+    mode: '0644'
+
+- name: Get private ip
+  when: inventory_hostname != groups['all'][0]
+  ansible.builtin.shell:
+    cmd: ip a | grep "{{private_net_for_search}}" |  grep -oP '(?<=inet\s)\d+(\.\d+){3}'
+  register: private_ip
+
+- name: Set fact - Private ip
+  when: inventory_hostname != groups['all'][0]
+  ansible.builtin.set_fact:
+    private_ip: "{{ hostvars[inventory_hostname].private_ip.stdout }}"
+
+- name: Copy template config to /etc/nomad.d/server.hcl
+  when: inventory_hostname != groups['all'][0]
+  ansible.builtin.template:
+    src: nomad-server.j2
+    dest: /etc/nomad.d/server.hcl
+    owner: nomad
+    group: nomad
+    mode: '0644'
+
+- name: Start nomad serviced 
+  when: inventory_hostname != groups['all'][0]
+  ansible.builtin.systemd_service:
+    name: nomad.service
+    daemon_reload: true
+    state: started
+
+- name: Start nomad serviced 
+  when: inventory_hostname != groups['all'][0]
+  ansible.builtin.systemd_service:
+    name: nomad.service
+    daemon_reload: true
+    state: restarted

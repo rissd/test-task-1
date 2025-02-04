@@ -1,0 +1,26 @@
+server {
+  enabled = true
+  bootstrap_expect = 1
+}
+
+consul {
+  address             = "127.0.0.1:8500"
+  server_service_name = "nomad-{{ inventory_hostname }}"
+  client_service_name = "nomad-client-{{ inventory_hostname }}"
+  auto_advertise      = true
+  server_auto_join    = true
+  client_auto_join    = true
+}
+
+bind_addr = "0.0.0.0" 
+
+advertise {
+  http = "{{ private_ip }}"
+  serf = "{{ private_ip }}"
+  rpc = "{{ private_ip }}"
+  
+}
+
+client {
+  enabled = true
+}

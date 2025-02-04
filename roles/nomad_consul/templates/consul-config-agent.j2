@@ -1,0 +1,24 @@
+{
+    "datacenter": "dc1",
+    "data_dir": "/opt/consul",
+    "log_level": "DEBUG",
+    "node_name": "{{ inventory_hostname }}",
+    "server": false,
+
+    "encrypt": "{{ consul_key }}",
+    "domain": "livelinux",
+    "addresses": {
+      "dns": "127.0.0.1",
+      "https": "0.0.0.0",
+      "grpc": "127.0.0.1",
+      "http": "0.0.0.0"
+    },
+    "bind_addr": "{{ private_ip }}",
+    "start_join": ["{{ consul_server_ip }}"],
+    "ports": {
+      "dns": 53
+     },
+    "ui_config": {
+      "enabled": true
+    }
+}

@@ -1,0 +1,11 @@
+{
+"bootstrap": true,
+"server": true,
+"datacenter": "dc1",
+"data_dir": "/var/consul",
+"encrypt": "{{ consul_key }}",
+"log_level": "INFO",
+"enable_syslog": true,
+"start_join": ["{{ consul_server_ip }}"],
+"bind_addr": "{{ consul_server_ip }}"
+}
