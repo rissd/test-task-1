@@ -1,12 +1,12 @@
 # Сonsul + Nomad cluster setup
 
-## Зависимости:
+## Локальные зависимости:
 ```
 vagrant
 ansible
 ```
 
-## Как запустить
+## Как запустить:
 ```
 vagrant up
 vagrant ssh-config > ssh_config
